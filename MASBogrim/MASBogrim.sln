@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MASBogrim", "MASBogrim\MASBogrim.csproj", "{9DFA6B9F-F0D6-4B02-AE40-D56ADA3340DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9DFA6B9F-F0D6-4B02-AE40-D56ADA3340DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DFA6B9F-F0D6-4B02-AE40-D56ADA3340DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DFA6B9F-F0D6-4B02-AE40-D56ADA3340DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DFA6B9F-F0D6-4B02-AE40-D56ADA3340DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3B4B5C3B-B9C4-4E8C-A74C-100779825FFA}
+	EndGlobalSection
+EndGlobal
