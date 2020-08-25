@@ -11,6 +11,7 @@ namespace MASBogrim
         private bool _bidNewAmount = false;
         private Agent _highestBidder = null;
         private double _lastPriceBidded = 0;
+        private double _minJumpAmount = 0;
         public List<Agent> AuctionParticipants;
         public event Action<double> GetNewPrice;
         public event Action<int> ExitAuction;
@@ -24,7 +25,9 @@ namespace MASBogrim
 
         public void CalculateNewPrice()
         {
-            throw new NotImplementedException();
+            Random rnd = new Random();
+            int amountToBid = rnd.Next((int)_lastPriceBidded, (int)(_lastPriceBidded + _minJumpAmount + 1));
+            SendNewPrice(amountToBid);
         }
 
         public void ShouldBid()
@@ -45,7 +48,14 @@ namespace MASBogrim
 
         public void PrintWinner(int id, double price)
         {
-
+            if(id == AgentId)
+            {
+                Console.WriteLine($"Agent: {AgentId} -- I won !!!");
+            }
+            else
+            {
+                Console.WriteLine($"Agent: {AgentId} -- Winner is: Agent {id}. He bidded {price}$");
+            }
         }
 
         public void AddMASToEvents(MAS mas)
@@ -53,14 +63,16 @@ namespace MASBogrim
 
         }
 
-        public void SendNewPrice()
+        public void SendNewPrice(int amount)
         {
-
+            GetNewPrice?.Invoke(amount);
         }
 
         public void PrintPrices(double startPrice, double minJumpPrice)
         {
-
+            _minJumpAmount = minJumpPrice;
+            _lastPriceBidded = startPrice;
+            Console.WriteLine($"Agent: {AgentId} -- Current price: {_lastPriceBidded}, Minimum jump price: {_minJumpAmount}");
         }
 
         public void PrintProductInfo(IProduct product)
