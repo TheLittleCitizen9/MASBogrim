@@ -25,6 +25,41 @@ namespace MASBogrim
             _secondsUntilClosingBids = secondsUntilClosingBids;
         }
 
+        public void StartAuction()
+        {
 
+        }
+        public void SendProductInfo()
+        {
+
+        }
+        public void SendPrices()
+        {
+
+        }
+        public void UpdtePrice(double newPrice)
+        {
+
+        }
+        public void FinishAuction()
+        {
+
+        }
+        public void SendWinner()
+        {
+
+        }
+        public void CloseRegistration()
+        {
+
+        }
+        public void RemoveAgentFromAuction(int id)
+        {
+
+        }
+        public void AddAgentToAuction(int id)
+        {
+
+        }
     }
 }
