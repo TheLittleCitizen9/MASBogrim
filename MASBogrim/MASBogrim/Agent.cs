@@ -41,9 +41,19 @@ namespace MASBogrim
             }
         }
 
-        public void ShouldEnterAuction()
+        public void ShouldEnterAuction(IProduct product)
         {
-
+            Random rnd = new Random();
+            int shouldEnter = rnd.Next(2);
+            if(shouldEnter == 1)
+            {
+                PrintProductInfo(product);
+                EnterAuction?.Invoke(AgentId);
+            }
+            else
+            {
+                ExitAuction?.Invoke(AgentId);
+            }
         }
 
         public void PrintWinner(int id, double price)
