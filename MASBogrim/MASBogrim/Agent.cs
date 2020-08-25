@@ -77,7 +77,7 @@ namespace MASBogrim
 
         public void PrintProductInfo(IProduct product)
         {
-
+            product.PrintProductInformation();
         }
     }
 }
