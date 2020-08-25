@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace MASBogrim
 {
@@ -11,13 +12,15 @@ namespace MASBogrim
         private IProduct _product;
         private int _secondsUntilClosingEntrance;
         private int _secondsUntilClosingBids;
+        private Auction _auction;
         public event Action<IProduct> GetProductInfo;
         public event Action GetBids;
         public event Action<int, double> GetWinner;
 
-        public MAS(List<Agent> agents, List<Auction> auctions, 
+        public MAS(Auction auction, List<Agent> agents, List<Auction> auctions, 
             IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
+            _auction = auction;
             _agents = agents;
             _auctions = auctions;
             _product = product;
@@ -27,11 +30,19 @@ namespace MASBogrim
 
         public void StartAuction()
         {
-
+            if(DateTime.Now == _auction.StartTime)
+            {
+                SendProductInfo();
+            }
+            Thread.Sleep(_secondsUntilClosingEntrance);
+            if(_agents.Count == 0)
+            {
+                Console.WriteLine("Auction closed because no agent wanted to join");
+            }
         }
         public void SendProductInfo()
         {
-
+            GetProductInfo?.Invoke(_product);
         }
         public void SendPrices()
         {
