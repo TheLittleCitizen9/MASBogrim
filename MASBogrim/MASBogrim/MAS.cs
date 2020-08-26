@@ -17,10 +17,11 @@ namespace MASBogrim
         private double _currentPrice;
         private Auction _auction;
         private int _highestBidderId;
-        public event Action<IProduct, MAS> GetProductInfo;
-        public event Action GetBids;
-        public event Action<int, double> GetWinner;
-        public event Action<double, double, int> PrintPrices;
+        private object _locker = new object();
+        //public event Action<IProduct, MAS> GetProductInfo;
+        //public event Action GetBids;
+        //public event Action<int, double> GetWinner;
+        public event Action<double, double, int> GetPrices;
 
         public MAS(Auction auction, List<Agent> agents, List<Auction> auctions, 
             IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
@@ -40,9 +41,9 @@ namespace MASBogrim
             Console.WriteLine("Auction is starting !!");
             foreach (var agent in _agents)
             {
-                GetProductInfo += agent.ShouldEnterAuction;
+                //GetProductInfo += agent.ShouldEnterAuction;
             }
-            X();
+            Main();
             //foreach (var agent in _agents)
             //{
             //    Thread thread = new Thread(() => X());
@@ -51,27 +52,18 @@ namespace MASBogrim
             
         }
 
-        public void X()
+        public void Main()
         {
             DateTime timeToEnd = DateTime.Now.AddSeconds(_secondsUntilClosingEntrance);
-            while (DateTime.Now < timeToEnd)
+            while (DateTime.Now <= timeToEnd)
             {
-                if (DateTime.Now >= _auction.StartTime)
+                if (DateTime.Now == _auction.StartTime)
                 {
                     SendProductInfo();
                 }
-                //Thread.Sleep(_secondsUntilClosingEntrance);
                 if (_agents.Count == 0)
                 {
                     Console.WriteLine("Auction closed because no agent wanted to join");
-                }
-                else
-                {
-                    //foreach (var agent in _agents)
-                    //{
-                    //    Thread thread = new Thread(() => SendPrices());
-                    //    thread.Start();
-                    //}
                 }
             }
             FinishAuction();
@@ -80,48 +72,83 @@ namespace MASBogrim
         }
         public void SendProductInfo()
         {
-            //GetProductInfo?.Invoke(_product, this);
+            foreach (var agent in _agents)
+            {
+                int agentId = agent.AgentId;
+                Task<bool> task = new Task<bool>(() => agent.ShouldEnterAuction(_product, this));
+                task.Start();
+                if(task.Result)
+                {
+                    AddAgentToAuction(agentId);
+                }
+            }
 
-            var delegates = GetProductInfo.GetInvocationList();
-            Parallel.ForEach(delegates, d => d.DynamicInvoke(_product, this));
+            //var delegates = GetProductInfo.GetInvocationList();
+            //Parallel.ForEach(delegates, d => d.DynamicInvoke(_product, this));
+        }
+
+        public void PrintPrices()
+        {
+            foreach (var agent in _agents)
+            {
+                int agentId = agent.AgentId;
+                Task task = new Task(() => agent.PrintPrices(_currentPrice, _auction.MinPriceJump, _highestBidderId));
+                task.Start();
+            }
         }
         public void SendPrices()
         {
-            //var myEvent = PrintPrices;
-            //if (myEvent != null)
-            //{
-            //    await Task.WhenAll(Array.ConvertAll(
-            //      myEvent.GetInvocationList(),
-            //      e => ((Action<double, double, int>)e).Invoke(_currentPrice, _auction.MinPriceJump, _highestBidderId)));
-            //}
+            //var delegates = PrintPrices.GetInvocationList();
+            //Parallel.ForEach(delegates, d => d.DynamicInvoke(_currentPrice, _auction.MinPriceJump, _highestBidderId));
 
-            var delegates = PrintPrices.GetInvocationList();
-            Parallel.ForEach(delegates, d => d.DynamicInvoke(_currentPrice, _auction.MinPriceJump, _highestBidderId));
+            PrintPrices();
 
-            //PrintPrices?.DynamicInvoke(_currentPrice, _auction.MinPriceJump, _highestBidderId);
-            //GetBids?.DynamicInvoke();
-
-            delegates = GetBids.GetInvocationList();
-            Parallel.ForEach(delegates, d => d.DynamicInvoke());
+            foreach (var agent in _agents)
+            {
+                int agentId = agent.AgentId;
+                Task<bool> task = new Task<bool>(() => agent.ShouldBid());
+                task.Start();
+                if (task.Result)
+                {
+                    UpdatePrice(agent.CalculateNewPrice(), agentId);
+                }
+            }
         }
         public void UpdatePrice(double newPrice, int id)
         {
-            if(newPrice - _auction.MinPriceJump >= _currentPrice)
+            if(newPrice - _auction.MinPriceJump > _currentPrice)
             {
-                _currentPrice = newPrice;
-                _highestBidderId = id;
+                lock(_locker)
+                {
+                    _currentPrice = newPrice;
+                    _highestBidderId = id;
+                }
             }
             SendPrices();
         }
         public void FinishAuction()
         {
             Console.WriteLine("going once, going twice...");
-            GetBids?.DynamicInvoke();
+            foreach (var agent in _agents)
+            {
+                int agentId = agent.AgentId;
+                Task<bool> task = new Task<bool>(() => agent.ShouldBid());
+                task.Start();
+                if (task.Result)
+                {
+                    UpdatePrice(agent.CalculateNewPrice(), agentId);
+                }
+            }
         }
         public void SendWinner()
         {
             Console.WriteLine($"MAS -- Auction finished");
-            GetWinner?.DynamicInvoke(_highestBidderId, _currentPrice);
+            foreach (var agent in _agents)
+            {
+                int agentId = agent.AgentId;
+                Task task = new Task(() => agent.PrintWinner(_highestBidderId, _currentPrice));
+                task.Start();
+            }
         }
         public void CloseRegistration()
         {
@@ -134,10 +161,10 @@ namespace MASBogrim
         }
         public void AddAgentToAuction(int id)
         {
-            Agent agent = _agents.Find(a => a.AgentId == id);
-            GetBids += agent.ShouldBid;
-            PrintPrices += agent.PrintPrices;
-            GetWinner += agent.PrintWinner;
+            //Agent agent = _agents.Find(a => a.AgentId == id);
+            //GetBids += agent.ShouldBid;
+            //GetPrices += agent.PrintPrices;
+            //GetWinner += agent.PrintWinner;
             Console.WriteLine($"MAS -- Agent {id} entered auction");
             SendPrices();
         }

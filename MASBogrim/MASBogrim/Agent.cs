@@ -7,15 +7,12 @@ namespace MASBogrim
     public class Agent : IAgent
     {
         public int AgentId { get; private set; }
-        private bool _enterAuction = false;
+        //private bool _enterAuction = false;
         private bool _bidNewAmount = false;
-        private Agent _highestBidder = null;
+        //private Agent _highestBidder = null;
         private double _lastPriceBidded = 0;
         private double _minJumpAmount = 0;
         public List<Agent> AuctionParticipants;
-        public event Action<double, int> GetNewPrice;
-        public event Action<int> ExitAuction;
-        public event Action<int> EnterAuction;
 
         public Agent(int id)
         {
@@ -23,37 +20,43 @@ namespace MASBogrim
             AuctionParticipants = new List<Agent>();
         }
 
-        public void CalculateNewPrice()
+        public double CalculateNewPrice()
         {
             Random rnd = new Random();
             int amountToBid = rnd.Next((int)(_lastPriceBidded + _minJumpAmount), (int)(_lastPriceBidded + 2* _minJumpAmount));
-            SendNewPrice(amountToBid);
+            return amountToBid;
         }
 
-        public void ShouldBid()
+        public bool ShouldBid()
         {
             Random rnd = new Random();
             int shouldBid = rnd.Next(1,6);
             if(shouldBid == 1)
             {
                 _bidNewAmount = true;
-                CalculateNewPrice();
             }
+            else
+            {
+                _bidNewAmount = false;
+            }
+            return _bidNewAmount;
         }
 
-        public void ShouldEnterAuction(IProduct product, MAS mas)
+        public bool ShouldEnterAuction(IProduct product, MAS mas)
         {
             Random rnd = new Random();
             int shouldEnter = rnd.Next(2);
             if(shouldEnter == 1)
             {
                 PrintProductInfo(product);
-                AddMASToEvents(mas);
-                EnterAuction?.Invoke(AgentId);
+                //AddMASToEvents(mas);
+                //EnterAuction?.Invoke(AgentId);
+                return true;
             }
             else
             {
-                ExitAuction?.Invoke(AgentId);
+                //ExitAuction?.Invoke(AgentId);
+                return false;
             }
         }
 
@@ -73,26 +76,30 @@ namespace MASBogrim
             }
         }
 
-        public void AddMASToEvents(MAS mas)
-        {
-            GetNewPrice += mas.UpdatePrice;
-            ExitAuction += mas.RemoveAgentFromAuction;
-            EnterAuction += mas.AddAgentToAuction;
-        }
+        //public void AddMASToEvents(MAS mas)
+        //{
+        //    GetNewPrice += mas.UpdatePrice;
+        //    ExitAuction += mas.RemoveAgentFromAuction;
+        //    EnterAuction += mas.AddAgentToAuction;
+        //}
 
-        public void SendNewPrice(int amount)
-        {
-            GetNewPrice?.Invoke(amount, AgentId);
-        }
+        //public void SendNewPrice(int amount)
+        //{
+        //    GetNewPrice?.Invoke(amount, AgentId);
+        //}
 
         public void PrintPrices(double startPrice, double minJumpPrice, int id)
         {
             _minJumpAmount = minJumpPrice;
             _lastPriceBidded = startPrice;
             if(id != 0)
+            {
                 Console.WriteLine($"Agent: {AgentId} -- Current price: {_lastPriceBidded}, Minimum jump price: {_minJumpAmount}, Bidder: agent {id}");
+            }
             else
+            {
                 Console.WriteLine($"Agent: {AgentId} -- Current price: {_lastPriceBidded}, Minimum jump price: {_minJumpAmount}");
+            }
         }
 
         public void PrintProductInfo(IProduct product)

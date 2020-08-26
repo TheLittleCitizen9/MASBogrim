@@ -6,7 +6,7 @@ namespace MASBogrim
 {
     public interface IAgent
     {
-        void ShouldBid();
-        void CalculateNewPrice();
+        bool ShouldBid();
+        double CalculateNewPrice();
     }
 }
