@@ -18,7 +18,7 @@ namespace MASBogrim
 
             MAS mas = new MAS(auction, new List<Agent>() { agent1, agent2 }, null, building, 4, 3);
 
-            mas.StartAuction();
+            mas.Main();
         }
     }
 }

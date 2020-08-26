@@ -30,7 +30,7 @@ namespace MASBogrim
         public bool ShouldBid()
         {
             Random rnd = new Random();
-            int shouldBid = rnd.Next(1,6);
+            int shouldBid = rnd.Next(1,4);
             if(shouldBid == 1)
             {
                 _bidNewAmount = true;

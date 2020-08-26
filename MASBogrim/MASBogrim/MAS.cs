@@ -11,6 +11,7 @@ namespace MASBogrim
     public class MAS
     {
         private List<Agent> _agents;
+        private List<Agent> _agentsInAuction;
         private List<Auction> _auctions;
         private IProduct _product;
         private int _secondsUntilClosingEntrance;
@@ -18,48 +19,30 @@ namespace MASBogrim
         private double _currentPrice;
         private Auction _auction;
         private int _highestBidderId;
-        private bool _isThereAWinner = false;
+        public bool IsThereAWinner = false;
         private object _locker = new object();
-        private System.Timers.Timer _startAuctionTimer;
-        private System.Timers.Timer _startBidsTimer;
-        private System.Timers.Timer _terminateAuction;
+        private Timers _timers;
 
         public MAS(Auction auction, List<Agent> agents, List<Auction> auctions, 
             IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
             _auction = auction;
             _agents = agents;
+            _agentsInAuction = new List<Agent>();
             _auctions = auctions;
             _product = product;
             _secondsUntilClosingEntrance = secondsUntilClosingEntrance;
             _secondsUntilClosingBids = secondsUntilClosingBids;
             _currentPrice = _auction.StartPrice;
             _highestBidderId = 0;
-            _startAuctionTimer = new System.Timers.Timer();
-            _startBidsTimer = new System.Timers.Timer();
-            _terminateAuction = new System.Timers.Timer();
-            _startAuctionTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishEntranceEvent);
-            _startAuctionTimer.Interval = _secondsUntilClosingEntrance * 1000;
-            _startAuctionTimer.Enabled = false;
-            _startBidsTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishBiddingEvent);
-            _startBidsTimer.Interval = _secondsUntilClosingBids * 1000;
-            _startBidsTimer.Enabled = false;
-            _terminateAuction.Elapsed += new ElapsedEventHandler(OnTimedTerminateAuctionEvent);
-            _terminateAuction.Interval = _secondsUntilClosingBids * 1000;
-            _terminateAuction.Enabled = false;
-        }
-
-        public void StartAuction()
-        {
-            Console.WriteLine("Auction is starting !!");
-            Main();
+            _timers = new Timers(secondsUntilClosingEntrance, secondsUntilClosingBids, this);
         }
 
         public void Main()
         {
+            Console.WriteLine("Auction is starting !!");
             int count = 0;
-            DateTime timeToEnd = DateTime.Now.AddSeconds(_secondsUntilClosingEntrance);
-            while (!_isThereAWinner)
+            while (!IsThereAWinner)
             {
                 if (_agents.Count == 0)
                 {
@@ -67,25 +50,18 @@ namespace MASBogrim
                 }
                 else if (DateTime.Now >= _auction.StartTime && count < 1)
                 {
-                    _startAuctionTimer.Start();
+                    _timers.StartAuctionTimer.Start();
                     count++;
-                    Thread.Sleep(2000);
-                    StartRun();
-                    
+                    //Thread.Sleep(2000);
+                    SendProductInfo();
                 }
-
             }
             SendWinner();
         }
 
-        public void StartRun()
-        {
-            SendProductInfo();
-        }
-
-        
         public void SendProductInfo()
         {
+            //_timers.StartAuctionTimer.Start();
             foreach (var agent in _agents)
             {
                 int agentId = agent.AgentId;
@@ -100,7 +76,7 @@ namespace MASBogrim
 
         public void PrintPrices()
         {
-            foreach (var agent in _agents)
+            foreach (var agent in _agentsInAuction)
             {
                 int agentId = agent.AgentId;
                 Task task = new Task(() => agent.PrintPrices(_currentPrice, _auction.MinPriceJump, _highestBidderId));
@@ -111,7 +87,7 @@ namespace MASBogrim
         {
             lock(_locker)
             {
-                _startBidsTimer.Start();
+                _timers.StartBidsTimer.Start();
             }
             
             PrintPrices();
@@ -131,8 +107,8 @@ namespace MASBogrim
         {
             lock(_locker)
             {
-                _startBidsTimer.Stop();
-                _terminateAuction.Stop();
+                _timers.StartBidsTimer.Stop();
+                _timers.TerminateAuction.Stop();
             }
             if(newPrice - _auction.MinPriceJump > _currentPrice)
             {
@@ -146,9 +122,9 @@ namespace MASBogrim
         }
         public void FinishAuction()
         {
-            _terminateAuction.Start();
+            _timers.TerminateAuction.Start();
             Console.WriteLine("going once, going twice...");
-            foreach (var agent in _agents)
+            foreach (var agent in _agentsInAuction)
             {
                 int agentId = agent.AgentId;
                 Task<bool> task = new Task<bool>(() => agent.ShouldBid());
@@ -162,12 +138,20 @@ namespace MASBogrim
         public void SendWinner()
         {
             Console.WriteLine($"MAS -- Auction finished");
-            foreach (var agent in _agents)
+            if (_agentsInAuction.Count == 0)
             {
-                int agentId = agent.AgentId;
-                Task task = new Task(() => agent.PrintWinner(_highestBidderId, _currentPrice));
-                task.Start();
+                Console.WriteLine($"MAS -- There were no agents in auction - so no winner");
             }
+            else
+            {
+                foreach (var agent in _agentsInAuction)
+                {
+                    int agentId = agent.AgentId;
+                    Task task = new Task(() => agent.PrintWinner(_highestBidderId, _currentPrice));
+                    task.Start();
+                }
+            }
+            
         }
         public void RemoveAgentFromAuction(int id)
         {
@@ -176,23 +160,8 @@ namespace MASBogrim
         }
         public void AddAgentToAuction(int id)
         {
+            _agentsInAuction.Add(_agents.Find(a => a.AgentId == id));
             Console.WriteLine($"MAS -- Agent {id} entered auction");
-        }
-
-        private void OnTimedFinishEntranceEvent(object source, ElapsedEventArgs e)
-        {
-            SendPrices();
-        }
-
-        private void OnTimedFinishBiddingEvent(object source, ElapsedEventArgs e)
-        {
-            
-            FinishAuction();
-        }
-
-        private void OnTimedTerminateAuctionEvent(object source, ElapsedEventArgs e)
-        {
-            _isThereAWinner = true;
         }
     }
 }
