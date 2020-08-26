@@ -16,7 +16,7 @@ namespace MASBogrim
 
             Auction auction = new Auction("dar", "a great house", 10000, 1000, DateTime.Now.AddSeconds(10), 8);
 
-            MAS mas = new MAS(auction, new List<Agent>() { agent1, agent2 }, null, building, 10, 5);
+            MAS mas = new MAS(auction, new List<Agent>() { agent1, agent2 }, null, building, 4, 3);
 
             mas.StartAuction();
         }

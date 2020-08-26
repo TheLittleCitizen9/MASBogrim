@@ -18,14 +18,11 @@ namespace MASBogrim
         private double _currentPrice;
         private Auction _auction;
         private int _highestBidderId;
+        private bool _isThereAWinner = false;
         private object _locker = new object();
         private System.Timers.Timer _startAuctionTimer;
         private System.Timers.Timer _startBidsTimer;
         private System.Timers.Timer _terminateAuction;
-        //public event Action<IProduct, MAS> GetProductInfo;
-        //public event Action GetBids;
-        //public event Action<int, double> GetWinner;
-        public event Action<double, double, int> GetPrices;
 
         public MAS(Auction auction, List<Agent> agents, List<Auction> auctions, 
             IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
@@ -42,13 +39,13 @@ namespace MASBogrim
             _startBidsTimer = new System.Timers.Timer();
             _terminateAuction = new System.Timers.Timer();
             _startAuctionTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishEntranceEvent);
-            _startAuctionTimer.Interval += _secondsUntilClosingEntrance * 1000;
+            _startAuctionTimer.Interval = _secondsUntilClosingEntrance * 1000;
             _startAuctionTimer.Enabled = false;
             _startBidsTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishBiddingEvent);
-            _startBidsTimer.Interval += _secondsUntilClosingBids * 1000;
+            _startBidsTimer.Interval = _secondsUntilClosingBids * 1000;
             _startBidsTimer.Enabled = false;
             _terminateAuction.Elapsed += new ElapsedEventHandler(OnTimedTerminateAuctionEvent);
-            _terminateAuction.Interval += _secondsUntilClosingBids * 1000;
+            _terminateAuction.Interval = _secondsUntilClosingBids * 1000;
             _terminateAuction.Enabled = false;
         }
 
@@ -56,31 +53,32 @@ namespace MASBogrim
         {
             Console.WriteLine("Auction is starting !!");
             Main();
-            
         }
 
         public void Main()
         {
             int count = 0;
             DateTime timeToEnd = DateTime.Now.AddSeconds(_secondsUntilClosingEntrance);
-            while (DateTime.Now <= timeToEnd)
+            while (!_isThereAWinner)
             {
-                if (DateTime.Now >= _auction.StartTime && count <= 1)
-                {
-                    _startAuctionTimer.Start();
-                    count++;
-                    Start();
-                }
                 if (_agents.Count == 0)
                 {
                     Console.WriteLine("Auction closed because no agent wante d to join");
                 }
+                else if (DateTime.Now >= _auction.StartTime && count < 1)
+                {
+                    _startAuctionTimer.Start();
+                    count++;
+                    Thread.Sleep(2000);
+                    StartRun();
+                    
+                }
+
             }
-            //Thread.Sleep(TimeSpan.FromSeconds(_secondsUntilClosingBids));
-            //SendWinner();
+            SendWinner();
         }
 
-        public void Start()
+        public void StartRun()
         {
             SendProductInfo();
         }
@@ -113,7 +111,6 @@ namespace MASBogrim
         {
             lock(_locker)
             {
-                _startAuctionTimer.Stop();
                 _startBidsTimer.Start();
             }
             
@@ -179,13 +176,7 @@ namespace MASBogrim
         }
         public void AddAgentToAuction(int id)
         {
-            //Agent agent = _agents.Find(a => a.AgentId == id);
-            //GetBids += agent.ShouldBid;
-            //GetPrices += agent.PrintPrices;
-            //GetWinner += agent.PrintWinner;
             Console.WriteLine($"MAS -- Agent {id} entered auction");
-            
-            //SendPrices();
         }
 
         private void OnTimedFinishEntranceEvent(object source, ElapsedEventArgs e)
@@ -201,7 +192,7 @@ namespace MASBogrim
 
         private void OnTimedTerminateAuctionEvent(object source, ElapsedEventArgs e)
         {
-            SendWinner();
+            _isThereAWinner = true;
         }
     }
 }
