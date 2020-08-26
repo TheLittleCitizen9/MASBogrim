@@ -1,4 +1,4 @@
-﻿using MASBogrim.Building;
+﻿using MASBogrim.Buildings;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -31,9 +31,9 @@ namespace MASBogrim.Buildings
             _rooms = rooms;
         }
 
-        public void PrintProductInformation()
+        public string GetProductInformation()
         {
-            Console.WriteLine($"Buildig name: {_name}, Number of rooms: {_rooms.Count}");
+            return $"Buildig name: {_name}, Number of rooms: {_rooms.Count}";
         }
 
         public string GetName()
