@@ -6,7 +6,7 @@ namespace MASBogrim
 {
     public interface IProduct
     {
-        void PrintProductInformation();
+        string GetProductInformation();
         string GetName();
     }
 }
