@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MASBogrim
 {
@@ -79,12 +80,29 @@ namespace MASBogrim
         }
         public void SendProductInfo()
         {
-            GetProductInfo?.Invoke(_product, this);
+            //GetProductInfo?.Invoke(_product, this);
+
+            var delegates = GetProductInfo.GetInvocationList();
+            Parallel.ForEach(delegates, d => d.DynamicInvoke(_product, this));
         }
         public void SendPrices()
         {
-            PrintPrices?.Invoke(_currentPrice, _auction.MinPriceJump, _highestBidderId);
-            GetBids?.Invoke();
+            //var myEvent = PrintPrices;
+            //if (myEvent != null)
+            //{
+            //    await Task.WhenAll(Array.ConvertAll(
+            //      myEvent.GetInvocationList(),
+            //      e => ((Action<double, double, int>)e).Invoke(_currentPrice, _auction.MinPriceJump, _highestBidderId)));
+            //}
+
+            var delegates = PrintPrices.GetInvocationList();
+            Parallel.ForEach(delegates, d => d.DynamicInvoke(_currentPrice, _auction.MinPriceJump, _highestBidderId));
+
+            //PrintPrices?.DynamicInvoke(_currentPrice, _auction.MinPriceJump, _highestBidderId);
+            //GetBids?.DynamicInvoke();
+
+            delegates = GetBids.GetInvocationList();
+            Parallel.ForEach(delegates, d => d.DynamicInvoke());
         }
         public void UpdatePrice(double newPrice, int id)
         {
@@ -98,12 +116,12 @@ namespace MASBogrim
         public void FinishAuction()
         {
             Console.WriteLine("going once, going twice...");
-            GetBids?.Invoke();
+            GetBids?.DynamicInvoke();
         }
         public void SendWinner()
         {
             Console.WriteLine($"MAS -- Auction finished");
-            GetWinner?.Invoke(_highestBidderId, _currentPrice);
+            GetWinner?.DynamicInvoke(_highestBidderId, _currentPrice);
         }
         public void CloseRegistration()
         {
