@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace MASBogrim
 {
@@ -18,6 +19,9 @@ namespace MASBogrim
         private Auction _auction;
         private int _highestBidderId;
         private object _locker = new object();
+        private System.Timers.Timer _startAuctionTimer;
+        private System.Timers.Timer _startBidsTimer;
+        private System.Timers.Timer _terminateAuction;
         //public event Action<IProduct, MAS> GetProductInfo;
         //public event Action GetBids;
         //public event Action<int, double> GetWinner;
@@ -34,42 +38,54 @@ namespace MASBogrim
             _secondsUntilClosingBids = secondsUntilClosingBids;
             _currentPrice = _auction.StartPrice;
             _highestBidderId = 0;
+            _startAuctionTimer = new System.Timers.Timer();
+            _startBidsTimer = new System.Timers.Timer();
+            _terminateAuction = new System.Timers.Timer();
+            _startAuctionTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishEntranceEvent);
+            _startAuctionTimer.Interval += _secondsUntilClosingEntrance * 1000;
+            _startAuctionTimer.Enabled = false;
+            _startBidsTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishBiddingEvent);
+            _startBidsTimer.Interval += _secondsUntilClosingBids * 1000;
+            _startBidsTimer.Enabled = false;
+            _terminateAuction.Elapsed += new ElapsedEventHandler(OnTimedTerminateAuctionEvent);
+            _terminateAuction.Interval += _secondsUntilClosingBids * 1000;
+            _terminateAuction.Enabled = false;
         }
 
         public void StartAuction()
         {
             Console.WriteLine("Auction is starting !!");
-            foreach (var agent in _agents)
-            {
-                //GetProductInfo += agent.ShouldEnterAuction;
-            }
             Main();
-            //foreach (var agent in _agents)
-            //{
-            //    Thread thread = new Thread(() => X());
-            //    thread.Start();
-            //}
             
         }
 
         public void Main()
         {
+            int count = 0;
             DateTime timeToEnd = DateTime.Now.AddSeconds(_secondsUntilClosingEntrance);
             while (DateTime.Now <= timeToEnd)
             {
-                if (DateTime.Now == _auction.StartTime)
+                if (DateTime.Now >= _auction.StartTime && count <= 1)
                 {
-                    SendProductInfo();
+                    _startAuctionTimer.Start();
+                    count++;
+                    Start();
                 }
                 if (_agents.Count == 0)
                 {
-                    Console.WriteLine("Auction closed because no agent wanted to join");
+                    Console.WriteLine("Auction closed because no agent wante d to join");
                 }
             }
-            FinishAuction();
-            Thread.Sleep(TimeSpan.FromSeconds(_secondsUntilClosingBids));
-            SendWinner();
+            //Thread.Sleep(TimeSpan.FromSeconds(_secondsUntilClosingBids));
+            //SendWinner();
         }
+
+        public void Start()
+        {
+            SendProductInfo();
+        }
+
+        
         public void SendProductInfo()
         {
             foreach (var agent in _agents)
@@ -82,9 +98,6 @@ namespace MASBogrim
                     AddAgentToAuction(agentId);
                 }
             }
-
-            //var delegates = GetProductInfo.GetInvocationList();
-            //Parallel.ForEach(delegates, d => d.DynamicInvoke(_product, this));
         }
 
         public void PrintPrices()
@@ -98,11 +111,14 @@ namespace MASBogrim
         }
         public void SendPrices()
         {
-            //var delegates = PrintPrices.GetInvocationList();
-            //Parallel.ForEach(delegates, d => d.DynamicInvoke(_currentPrice, _auction.MinPriceJump, _highestBidderId));
-
+            lock(_locker)
+            {
+                _startAuctionTimer.Stop();
+                _startBidsTimer.Start();
+            }
+            
             PrintPrices();
-
+            
             foreach (var agent in _agents)
             {
                 int agentId = agent.AgentId;
@@ -116,6 +132,11 @@ namespace MASBogrim
         }
         public void UpdatePrice(double newPrice, int id)
         {
+            lock(_locker)
+            {
+                _startBidsTimer.Stop();
+                _terminateAuction.Stop();
+            }
             if(newPrice - _auction.MinPriceJump > _currentPrice)
             {
                 lock(_locker)
@@ -128,6 +149,7 @@ namespace MASBogrim
         }
         public void FinishAuction()
         {
+            _terminateAuction.Start();
             Console.WriteLine("going once, going twice...");
             foreach (var agent in _agents)
             {
@@ -150,10 +172,6 @@ namespace MASBogrim
                 task.Start();
             }
         }
-        public void CloseRegistration()
-        {
-
-        }
         public void RemoveAgentFromAuction(int id)
         {
             Agent agentToRemove = _agents.Where(a => a.AgentId == id).ToList()[0];
@@ -166,7 +184,24 @@ namespace MASBogrim
             //GetPrices += agent.PrintPrices;
             //GetWinner += agent.PrintWinner;
             Console.WriteLine($"MAS -- Agent {id} entered auction");
+            
+            //SendPrices();
+        }
+
+        private void OnTimedFinishEntranceEvent(object source, ElapsedEventArgs e)
+        {
             SendPrices();
+        }
+
+        private void OnTimedFinishBiddingEvent(object source, ElapsedEventArgs e)
+        {
+            
+            FinishAuction();
+        }
+
+        private void OnTimedTerminateAuctionEvent(object source, ElapsedEventArgs e)
+        {
+            SendWinner();
         }
     }
 }
