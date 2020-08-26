@@ -18,8 +18,8 @@ namespace MASBogrim
         private int _secondsUntilClosingBids;
         private double _currentPrice;
         private Auction _auction;
-        private int _highestBidderId;
-        public bool IsThereAWinner = false;
+        //private int _highestBidderId;
+        //public bool IsThereAWinner = false;
         private object _locker = new object();
         private Timers _timers;
 
@@ -40,11 +40,16 @@ namespace MASBogrim
         public void Manager()
         {
             Console.WriteLine("! I Am The MAS !");
-            foreach (var auction in _auctions)
+            Task.Factory.StartNew(() =>
             {
-                Task task = new Task(() => Main(auction));
-                task.Start();
-            }
+                Thread.CurrentThread.IsBackground = false;
+                foreach (var auction in _auctions)
+                {
+                    Task task = new Task(() => Main(auction));
+                    task.Start();
+                }
+            });
+            Console.ReadLine();
         }
 
         public void Main(Auction auction)
@@ -52,7 +57,7 @@ namespace MASBogrim
             _timers = new Timers(_secondsUntilClosingEntrance, _secondsUntilClosingBids, this, auction);
             Console.WriteLine($"Auction {auction.Id} is starting !!");
             int count = 0;
-            while (!IsThereAWinner)
+            while (!auction.IsThereAWinner)
             {
                 if (auction.Agents.Count == 0)
                 {
@@ -73,7 +78,7 @@ namespace MASBogrim
             foreach (var agent in auction.Agents)
             {
                 int agentId = agent.AgentId;
-                Task<bool> task = new Task<bool>(() => agent.ShouldEnterAuction(_product, this));
+                Task<bool> task = new Task<bool>(() => agent.ShouldEnterAuction(_product, this, auction));
                 task.Start();
                 if(task.Result)
                 {
@@ -87,7 +92,7 @@ namespace MASBogrim
             foreach (var agent in auction.BiddingAgents)
             {
                 int agentId = agent.AgentId;
-                Task task = new Task(() => agent.PrintPrices(auction.CurrentPrice, auction.MinPriceJump, _highestBidderId));
+                Task task = new Task(() => agent.PrintPrices(auction.CurrentPrice, auction.MinPriceJump, auction.HighestBidder, auction.Id));
                 task.Start();
             }
         }
@@ -155,7 +160,7 @@ namespace MASBogrim
                 foreach (var agent in auction.BiddingAgents)
                 {
                     int agentId = agent.AgentId;
-                    Task task = new Task(() => agent.PrintWinner(auction.HighestBidder, auction.CurrentPrice));
+                    Task task = new Task(() => agent.PrintWinner(auction.HighestBidder, auction.CurrentPrice, auction.Id));
                     task.Start();
                 }
             }

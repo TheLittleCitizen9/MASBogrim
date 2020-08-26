@@ -44,7 +44,7 @@ namespace MASBogrim
 
         private void OnTimedTerminateAuctionEvent(object source, ElapsedEventArgs e)
         {
-            _mas.IsThereAWinner = true;
+            _auction.IsThereAWinner = true;
         }
     }
 }

@@ -19,6 +19,7 @@ namespace MASBogrim
         public List<Agent> BiddingAgents { get; set; }
 
         public int HighestBidder { get; set; }
+        public bool IsThereAWinner { get; set; }
 
         public Auction(string productName, string info, double startPrice,
             double minPriceJump, DateTime startTime, int id)
@@ -32,6 +33,7 @@ namespace MASBogrim
             CurrentPrice = StartPrice;
             Agents = new List<Agent>();
             BiddingAgents = new List<Agent>();
+            IsThereAWinner = false;
         }
     }
 }
