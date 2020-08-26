@@ -7,9 +7,7 @@ namespace MASBogrim
     public class Agent : IAgent
     {
         public int AgentId { get; private set; }
-        //private bool _enterAuction = false;
         private bool _bidNewAmount = false;
-        //private Agent _highestBidder = null;
         private double _lastPriceBidded = 0;
         private double _minJumpAmount = 0;
         public List<Agent> AuctionParticipants;
@@ -49,13 +47,10 @@ namespace MASBogrim
             if(shouldEnter == 1)
             {
                 PrintProductInfo(product);
-                //AddMASToEvents(mas);
-                //EnterAuction?.Invoke(AgentId);
                 return true;
             }
             else
             {
-                //ExitAuction?.Invoke(AgentId);
                 return false;
             }
         }
@@ -75,18 +70,6 @@ namespace MASBogrim
                 Console.WriteLine($"Agent: {AgentId} -- Winner is: Agent {id}. He bidded {price}$");
             }
         }
-
-        //public void AddMASToEvents(MAS mas)
-        //{
-        //    GetNewPrice += mas.UpdatePrice;
-        //    ExitAuction += mas.RemoveAgentFromAuction;
-        //    EnterAuction += mas.AddAgentToAuction;
-        //}
-
-        //public void SendNewPrice(int amount)
-        //{
-        //    GetNewPrice?.Invoke(amount, AgentId);
-        //}
 
         public void PrintPrices(double startPrice, double minJumpPrice, int id)
         {

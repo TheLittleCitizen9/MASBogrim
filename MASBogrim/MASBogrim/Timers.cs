@@ -11,10 +11,12 @@ namespace MASBogrim
         public Timer StartBidsTimer;
         public Timer TerminateAuction;
         private MAS _mas;
+        private Auction _auction;
 
-        public Timers(int secondsUntilClosingEntrance, int secondsUntilClosingBids, MAS mas)
+        public Timers(int secondsUntilClosingEntrance, int secondsUntilClosingBids, MAS mas, Auction auction)
         {
             _mas = mas;
+            _auction = auction;
             StartAuctionTimer = new Timer();
             StartBidsTimer = new Timer();
             TerminateAuction = new Timer();
@@ -31,13 +33,13 @@ namespace MASBogrim
 
         private void OnTimedFinishEntranceEvent(object source, ElapsedEventArgs e)
         {
-            _mas.SendPrices();
+            _mas.SendPrices(_auction);
         }
 
         private void OnTimedFinishBiddingEvent(object source, ElapsedEventArgs e)
         {
 
-            _mas.FinishAuction();
+            _mas.FinishAuction(_auction);
         }
 
         private void OnTimedTerminateAuctionEvent(object source, ElapsedEventArgs e)

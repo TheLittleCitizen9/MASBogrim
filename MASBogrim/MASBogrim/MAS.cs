@@ -26,142 +26,150 @@ namespace MASBogrim
         public MAS(Auction auction, List<Agent> agents, List<Auction> auctions, 
             IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
-            _auction = auction;
-            _agents = agents;
-            _agentsInAuction = new List<Agent>();
+            //_auction = auction;
+            //_agents = agents;
+            //_agentsInAuction = new List<Agent>();
             _auctions = auctions;
             _product = product;
             _secondsUntilClosingEntrance = secondsUntilClosingEntrance;
             _secondsUntilClosingBids = secondsUntilClosingBids;
-            _currentPrice = _auction.StartPrice;
-            _highestBidderId = 0;
-            _timers = new Timers(secondsUntilClosingEntrance, secondsUntilClosingBids, this);
+            //_currentPrice = _auction.StartPrice;
+            //_highestBidderId = 0;
         }
 
-        public void Main()
+        public void Manager()
         {
-            Console.WriteLine("Auction is starting !!");
+            Console.WriteLine("! I Am The MAS !");
+            foreach (var auction in _auctions)
+            {
+                Task task = new Task(() => Main(auction));
+                task.Start();
+            }
+        }
+
+        public void Main(Auction auction)
+        {
+            _timers = new Timers(_secondsUntilClosingEntrance, _secondsUntilClosingBids, this, auction);
+            Console.WriteLine($"Auction {auction.Id} is starting !!");
             int count = 0;
             while (!IsThereAWinner)
             {
-                if (_agents.Count == 0)
+                if (auction.Agents.Count == 0)
                 {
-                    Console.WriteLine("Auction closed because no agent wante d to join");
+                    Console.WriteLine($"Auction {auction.Id} closed because no agent wante d to join");
                 }
-                else if (DateTime.Now >= _auction.StartTime && count < 1)
+                else if (DateTime.Now >= auction.StartTime && count < 1)
                 {
                     _timers.StartAuctionTimer.Start();
                     count++;
-                    //Thread.Sleep(2000);
-                    SendProductInfo();
+                    SendProductInfo(auction);
                 }
             }
-            SendWinner();
+            SendWinner(auction);
         }
 
-        public void SendProductInfo()
+        public void SendProductInfo(Auction auction)
         {
-            //_timers.StartAuctionTimer.Start();
-            foreach (var agent in _agents)
+            foreach (var agent in auction.Agents)
             {
                 int agentId = agent.AgentId;
                 Task<bool> task = new Task<bool>(() => agent.ShouldEnterAuction(_product, this));
                 task.Start();
                 if(task.Result)
                 {
-                    AddAgentToAuction(agentId);
+                    AddAgentToAuction(agentId, auction);
                 }
             }
         }
 
-        public void PrintPrices()
+        public void PrintPrices(Auction auction)
         {
-            foreach (var agent in _agentsInAuction)
+            foreach (var agent in auction.BiddingAgents)
             {
                 int agentId = agent.AgentId;
-                Task task = new Task(() => agent.PrintPrices(_currentPrice, _auction.MinPriceJump, _highestBidderId));
+                Task task = new Task(() => agent.PrintPrices(auction.CurrentPrice, auction.MinPriceJump, _highestBidderId));
                 task.Start();
             }
         }
-        public void SendPrices()
+        public void SendPrices(Auction auction)
         {
             lock(_locker)
             {
                 _timers.StartBidsTimer.Start();
             }
             
-            PrintPrices();
+            PrintPrices(auction);
             
-            foreach (var agent in _agents)
+            foreach (var agent in auction.BiddingAgents)
             {
                 int agentId = agent.AgentId;
                 Task<bool> task = new Task<bool>(() => agent.ShouldBid());
                 task.Start();
                 if (task.Result)
                 {
-                    UpdatePrice(agent.CalculateNewPrice(), agentId);
+                    UpdatePrice(agent.CalculateNewPrice(), agentId, auction);
                 }
             }
         }
-        public void UpdatePrice(double newPrice, int id)
+        public void UpdatePrice(double newPrice, int id, Auction auction)
         {
             lock(_locker)
             {
                 _timers.StartBidsTimer.Stop();
                 _timers.TerminateAuction.Stop();
             }
-            if(newPrice - _auction.MinPriceJump > _currentPrice)
+            if(newPrice - auction.MinPriceJump > auction.CurrentPrice)
             {
                 lock(_locker)
                 {
-                    _currentPrice = newPrice;
-                    _highestBidderId = id;
+                    auction.CurrentPrice = newPrice;
+                    auction.HighestBidder = id;
                 }
             }
-            SendPrices();
+            SendPrices(auction);
         }
-        public void FinishAuction()
+        public void FinishAuction(Auction auction)
         {
             _timers.TerminateAuction.Start();
             Console.WriteLine("going once, going twice...");
-            foreach (var agent in _agentsInAuction)
+            foreach (var agent in auction.BiddingAgents)
             {
                 int agentId = agent.AgentId;
                 Task<bool> task = new Task<bool>(() => agent.ShouldBid());
                 task.Start();
                 if (task.Result)
                 {
-                    UpdatePrice(agent.CalculateNewPrice(), agentId);
+                    UpdatePrice(agent.CalculateNewPrice(), agentId, auction);
                 }
             }
         }
-        public void SendWinner()
+        public void SendWinner(Auction auction)
         {
-            Console.WriteLine($"MAS -- Auction finished");
-            if (_agentsInAuction.Count == 0)
+            Console.WriteLine($"MAS -- Auction {auction.Id} finished");
+            if (auction.BiddingAgents.Count == 0)
             {
-                Console.WriteLine($"MAS -- There were no agents in auction - so no winner");
+                Console.WriteLine($"MAS -- There were no agents in auction {auction.Id} - so no winner");
             }
             else
             {
-                foreach (var agent in _agentsInAuction)
+                foreach (var agent in auction.BiddingAgents)
                 {
                     int agentId = agent.AgentId;
-                    Task task = new Task(() => agent.PrintWinner(_highestBidderId, _currentPrice));
+                    Task task = new Task(() => agent.PrintWinner(auction.HighestBidder, auction.CurrentPrice));
                     task.Start();
                 }
             }
             
         }
-        public void RemoveAgentFromAuction(int id)
+        public void RemoveAgentFromAuction(int id, Auction auction)
         {
-            Agent agentToRemove = _agents.Where(a => a.AgentId == id).ToList()[0];
-            _agents.Remove(agentToRemove);
+            Agent agentToRemove = auction.Agents.Where(a => a.AgentId == id).ToList()[0];
+            auction.Agents.Remove(agentToRemove);
         }
-        public void AddAgentToAuction(int id)
+        public void AddAgentToAuction(int id, Auction auction)
         {
-            _agentsInAuction.Add(_agents.Find(a => a.AgentId == id));
-            Console.WriteLine($"MAS -- Agent {id} entered auction");
+            auction.BiddingAgents.Add(auction.Agents.Find(a => a.AgentId == id));
+            Console.WriteLine($"MAS -- Agent {id} entered auction {auction.Id}");
         }
     }
 }
