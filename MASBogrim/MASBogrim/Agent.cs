@@ -13,7 +13,7 @@ namespace MASBogrim
         private double _lastPriceBidded = 0;
         private double _minJumpAmount = 0;
         public List<Agent> AuctionParticipants;
-        public event Action<double> GetNewPrice;
+        public event Action<double, int> GetNewPrice;
         public event Action<int> ExitAuction;
         public event Action<int> EnterAuction;
 
@@ -26,7 +26,7 @@ namespace MASBogrim
         public void CalculateNewPrice()
         {
             Random rnd = new Random();
-            int amountToBid = rnd.Next((int)_lastPriceBidded, (int)(_lastPriceBidded + _minJumpAmount + 1));
+            int amountToBid = rnd.Next((int)(_lastPriceBidded + _minJumpAmount + 1), (int)_lastPriceBidded*2);
             SendNewPrice(amountToBid);
         }
 
@@ -41,13 +41,14 @@ namespace MASBogrim
             }
         }
 
-        public void ShouldEnterAuction(IProduct product)
+        public void ShouldEnterAuction(IProduct product, MAS mas)
         {
             Random rnd = new Random();
             int shouldEnter = rnd.Next(2);
             if(shouldEnter == 1)
             {
                 PrintProductInfo(product);
+                AddMASToEvents(mas);
                 EnterAuction?.Invoke(AgentId);
             }
             else
@@ -70,12 +71,14 @@ namespace MASBogrim
 
         public void AddMASToEvents(MAS mas)
         {
-
+            GetNewPrice += mas.UpdtePrice;
+            ExitAuction += mas.RemoveAgentFromAuction;
+            EnterAuction += mas.AddAgentToAuction;
         }
 
         public void SendNewPrice(int amount)
         {
-            GetNewPrice?.Invoke(amount);
+            GetNewPrice?.Invoke(amount, AgentId);
         }
 
         public void PrintPrices(double startPrice, double minJumpPrice)
@@ -87,7 +90,7 @@ namespace MASBogrim
 
         public void PrintProductInfo(IProduct product)
         {
-            product.PrintProductInformation();
+            Console.WriteLine($"Agent: {AgentId} -- {product.GetProductInformation()}"); 
         }
     }
 }
