@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MASBogrim
 {
     public class Auction
     {
-        public string ProductName { get; private set; }
-        public string ProductInfo { get; private set; }
         public IProduct Product { get; private set; }
         public double StartPrice { get; private set; }
         public double MinPriceJump { get; private set; }
@@ -28,8 +25,6 @@ namespace MASBogrim
         public Auction(IProduct product, double startPrice, 
             double minPriceJump, DateTime startTime, int id, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
-            //ProductName = productName;
-            //ProductInfo = info;
             Product = product;
             StartPrice = startPrice;
             MinPriceJump = minPriceJump;

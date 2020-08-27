@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MASBogrim.Buildings
+﻿namespace MASBogrim.Buildings
 {
     public class Room
     {

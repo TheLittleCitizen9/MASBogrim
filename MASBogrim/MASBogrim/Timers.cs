@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Timers;
+﻿using System.Timers;
 
 namespace MASBogrim
 {
@@ -45,7 +42,6 @@ namespace MASBogrim
         private void OnTimedTerminateAuctionEvent(object source, ElapsedEventArgs e)
         {
             _auction.IsThereAWinner = true;
-            //_mas.SendWinner(_auction);
         }
     }
 }
