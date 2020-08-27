@@ -20,7 +20,7 @@ namespace MASBogrim
             auction.Agents = new List<Agent>() { agent1, agent2 };
             auction2.Agents = new List<Agent>() { agent1, agent2 };
 
-            MAS mas = new MAS(auction, new List<Agent>() { agent1, agent2 }, new List<Auction>() { auction, auction2}, building, 4, 3);
+            MAS mas = new MAS(new List<Auction>() { auction, auction2}, building, 4, 3);
 
             //mas.Main(auction);
             mas.Manager();

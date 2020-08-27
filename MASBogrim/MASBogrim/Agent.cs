@@ -59,7 +59,7 @@ namespace MASBogrim
         {
             if(id == AgentId)
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} - I won !!!");
+                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} - I won !!! Price: {price}$");
             }
             else if(id ==0)
             {

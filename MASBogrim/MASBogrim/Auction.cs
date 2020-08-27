@@ -20,6 +20,7 @@ namespace MASBogrim
 
         public int HighestBidder { get; set; }
         public bool IsThereAWinner { get; set; }
+        public Timers _timers;
 
         public Auction(string productName, string info, double startPrice,
             double minPriceJump, DateTime startTime, int id)
