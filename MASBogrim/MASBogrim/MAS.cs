@@ -17,7 +17,6 @@ namespace MASBogrim
         private object _locker = new object();
         public event Func<Tuple<int, bool>> EnterBidding;
         public event Func<Tuple<int, double>> GetNewPrice;
-        //public event Func<int> FinishBidding;
 
         public MAS(List<Auction> auctions, IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
@@ -94,18 +93,6 @@ namespace MASBogrim
 
             List<Tuple<int, bool>> agentsThatWantToBid = AgentsThatWantToBid(auction);
             InvokeGetPrices(auction);
-
-            //foreach (var agent in auction.BiddingAgents)
-            //{
-            //    int agentId = agent.AgentId;
-            //    var biddingAgent = agent;
-            //    Task<bool> task = new Task<bool>(() => biddingAgent.ShouldBid());
-            //    task.Start();
-            //    if (task.Result)
-            //    {
-            //        UpdatePrice(biddingAgent.CalculateNewPrice(), agentId, auction);
-            //    }
-            //}
         }
         public void UpdatePrice(List<Tuple<int, double>> results, Auction auction)
         {
@@ -121,20 +108,6 @@ namespace MASBogrim
             }
             SendPrices(auction);
         }
-        //public void UpdatePrice(double newPrice, int id, Auction auction)
-        //{
-        //    auction._timers.StartBidsTimer.Stop();
-        //    auction._timers.TerminateAuction.Stop();
-        //    if(newPrice - auction.MinPriceJump > auction.CurrentPrice)
-        //    {
-        //        lock(_locker)
-        //        {
-        //            auction.CurrentPrice = newPrice;
-        //            auction.HighestBidder = id;
-        //        }
-        //    }
-        //    SendPrices(auction);
-        //}
         private void InvokeGetPrices(Auction auction)
         {
             List<Task> tasks = new List<Task>();
@@ -155,9 +128,7 @@ namespace MASBogrim
                 CleanGetPrices(auction);
                 UpdatePrice(allResults, auction);
             }
-            
         }
-
         private List<Tuple<int, bool>> AgentsThatWantToBid(Auction auction)
         {
             List<Task> tasks = new List<Task>();
@@ -178,28 +149,16 @@ namespace MASBogrim
                             {
                                 GetNewPrice += agent.CalculateNewPrice;
                             }
-                            
                         }
-                        
                     }
                 }));
                 Task.WaitAll(tasks.ToArray());
             }
             return allResults;
         }
-
         private void CleanGetPrices(Auction auction)
         {
             var delegates = GetNewPrice?.GetInvocationList();
-            foreach (var agent in auction.BiddingAgents)
-            {
-                GetNewPrice -= agent.CalculateNewPrice;
-            }
-        }
-
-        private void CleanEnterBidding(Auction auction)
-        {
-            var delegates = EnterBidding.GetInvocationList();
             foreach (var agent in auction.BiddingAgents)
             {
                 GetNewPrice -= agent.CalculateNewPrice;
@@ -212,18 +171,6 @@ namespace MASBogrim
             Console.WriteLine("going once, going twice...");
             List<Tuple<int, bool>> allResults = AgentsThatWantToBid(auction);
             InvokeGetPrices(auction);
-
-            //foreach (var agent in auction.BiddingAgents)
-            //{
-            //    int agentId = agent.AgentId;
-            //    var biddingAgent = agent;
-            //    Task<bool> task = new Task<bool>(() => biddingAgent.ShouldBid());
-            //    task.Start();
-            //    if (task.Result)
-            //    {
-            //        UpdatePrice(biddingAgent.CalculateNewPrice(), agentId, auction);
-            //    }
-            //}
         }
         public void SendWinner(Auction auction)
         {
@@ -250,7 +197,6 @@ namespace MASBogrim
             var agent = auction.Agents.Find(a => a.AgentId == id);
             auction.BiddingAgents.Add(agent);
             EnterBidding += agent.ShouldBid;
-            //GetNewPrice += agent.CalculateNewPrice;
             Console.WriteLine($"MAS -- Agent {id} entered auction {auction.Id}");
         }
     }
