@@ -15,6 +15,9 @@ namespace MASBogrim
         private int _secondsUntilClosingEntrance;
         private int _secondsUntilClosingBids;
         private object _locker = new object();
+        public event Func<Tuple<int, bool>> EnterBidding;
+        public event Func<Tuple<int, double>> GetNewPrice;
+        //public event Func<int> FinishBidding;
 
         public MAS(List<Auction> auctions, IProduct product, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
@@ -88,49 +91,139 @@ namespace MASBogrim
             auction._timers.StartBidsTimer.Start();
             
             PrintPrices(auction);
-            
-            foreach (var agent in auction.BiddingAgents)
-            {
-                int agentId = agent.AgentId;
-                var biddingAgent = agent;
-                Task<bool> task = new Task<bool>(() => biddingAgent.ShouldBid());
-                task.Start();
-                if (task.Result)
-                {
-                    UpdatePrice(biddingAgent.CalculateNewPrice(), agentId, auction);
-                }
-            }
+
+            List<Tuple<int, bool>> agentsThatWantToBid = AgentsThatWantToBid(auction);
+            InvokeGetPrices(auction);
+
+            //foreach (var agent in auction.BiddingAgents)
+            //{
+            //    int agentId = agent.AgentId;
+            //    var biddingAgent = agent;
+            //    Task<bool> task = new Task<bool>(() => biddingAgent.ShouldBid());
+            //    task.Start();
+            //    if (task.Result)
+            //    {
+            //        UpdatePrice(biddingAgent.CalculateNewPrice(), agentId, auction);
+            //    }
+            //}
         }
-        public void UpdatePrice(double newPrice, int id, Auction auction)
+        public void UpdatePrice(List<Tuple<int, double>> results, Auction auction)
         {
             auction._timers.StartBidsTimer.Stop();
             auction._timers.TerminateAuction.Stop();
-            if(newPrice - auction.MinPriceJump > auction.CurrentPrice)
+            foreach (var result in results)
             {
-                lock(_locker)
+                if(result.Item2 > auction.CurrentPrice)
                 {
-                    auction.CurrentPrice = newPrice;
-                    auction.HighestBidder = id;
+                    auction.CurrentPrice = result.Item2;
+                    auction.HighestBidder = result.Item1;
                 }
             }
             SendPrices(auction);
+        }
+        //public void UpdatePrice(double newPrice, int id, Auction auction)
+        //{
+        //    auction._timers.StartBidsTimer.Stop();
+        //    auction._timers.TerminateAuction.Stop();
+        //    if(newPrice - auction.MinPriceJump > auction.CurrentPrice)
+        //    {
+        //        lock(_locker)
+        //        {
+        //            auction.CurrentPrice = newPrice;
+        //            auction.HighestBidder = id;
+        //        }
+        //    }
+        //    SendPrices(auction);
+        //}
+        private void InvokeGetPrices(Auction auction)
+        {
+            List<Task> tasks = new List<Task>();
+            List<Tuple<int, double>> allResults = new List<Tuple<int, double>>();
+            var delegates = GetNewPrice?.GetInvocationList();
+            if(delegates != null)
+            {
+                foreach (var item in delegates)
+                {
+                    tasks.Add(Task.Factory.StartNew(() =>
+                    {
+                        var outputMsg = item;
+                        var result = (Tuple<int, double>)outputMsg?.DynamicInvoke();
+                        allResults.Add(result);
+                    }));
+                }
+                Task.WaitAll(tasks.ToArray());
+                CleanGetPrices(auction);
+                UpdatePrice(allResults, auction);
+            }
+            
+        }
+
+        private List<Tuple<int, bool>> AgentsThatWantToBid(Auction auction)
+        {
+            List<Task> tasks = new List<Task>();
+            List<Tuple<int, bool>> allResults = new List<Tuple<int, bool>>();
+            var delegates = EnterBidding?.GetInvocationList();
+            foreach (var item in delegates)
+            {
+                tasks.Add(Task.Factory.StartNew(() =>
+                {
+                    var outputMsg = item;
+                    var result = (Tuple<int, bool>)outputMsg?.DynamicInvoke();
+                    if (result.Item2)
+                    {
+                        if(auction.BiddingAgents.Count > 0)
+                        {
+                            var agent = auction.BiddingAgents.Find(a => a.AgentId == result.Item1);
+                            if(agent != null)
+                            {
+                                GetNewPrice += agent.CalculateNewPrice;
+                            }
+                            
+                        }
+                        
+                    }
+                }));
+                Task.WaitAll(tasks.ToArray());
+            }
+            return allResults;
+        }
+
+        private void CleanGetPrices(Auction auction)
+        {
+            var delegates = GetNewPrice?.GetInvocationList();
+            foreach (var agent in auction.BiddingAgents)
+            {
+                GetNewPrice -= agent.CalculateNewPrice;
+            }
+        }
+
+        private void CleanEnterBidding(Auction auction)
+        {
+            var delegates = EnterBidding.GetInvocationList();
+            foreach (var agent in auction.BiddingAgents)
+            {
+                GetNewPrice -= agent.CalculateNewPrice;
+            }
         }
         public void FinishAuction(Auction auction)
         {
             auction._timers.TerminateAuction.Start();
             
             Console.WriteLine("going once, going twice...");
-            foreach (var agent in auction.BiddingAgents)
-            {
-                int agentId = agent.AgentId;
-                var biddingAgent = agent;
-                Task<bool> task = new Task<bool>(() => biddingAgent.ShouldBid());
-                task.Start();
-                if (task.Result)
-                {
-                    UpdatePrice(biddingAgent.CalculateNewPrice(), agentId, auction);
-                }
-            }
+            List<Tuple<int, bool>> allResults = AgentsThatWantToBid(auction);
+            InvokeGetPrices(auction);
+
+            //foreach (var agent in auction.BiddingAgents)
+            //{
+            //    int agentId = agent.AgentId;
+            //    var biddingAgent = agent;
+            //    Task<bool> task = new Task<bool>(() => biddingAgent.ShouldBid());
+            //    task.Start();
+            //    if (task.Result)
+            //    {
+            //        UpdatePrice(biddingAgent.CalculateNewPrice(), agentId, auction);
+            //    }
+            //}
         }
         public void SendWinner(Auction auction)
         {
@@ -151,11 +244,13 @@ namespace MASBogrim
                     task.Start();
                 }
             }
-            
         }
         public void AddAgentToAuction(int id, Auction auction)
         {
-            auction.BiddingAgents.Add(auction.Agents.Find(a => a.AgentId == id));
+            var agent = auction.Agents.Find(a => a.AgentId == id);
+            auction.BiddingAgents.Add(agent);
+            EnterBidding += agent.ShouldBid;
+            //GetNewPrice += agent.CalculateNewPrice;
             Console.WriteLine($"MAS -- Agent {id} entered auction {auction.Id}");
         }
     }

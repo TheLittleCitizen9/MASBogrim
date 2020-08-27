@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MASBogrim
 {
-    public class Agent : IAgent
+    public class Agent
     {
         public int AgentId { get; private set; }
         private bool _bidNewAmount = false;
@@ -18,14 +18,14 @@ namespace MASBogrim
             AuctionParticipants = new List<Agent>();
         }
 
-        public double CalculateNewPrice()
+        public Tuple<int, double> CalculateNewPrice()
         {
             Random rnd = new Random();
             int amountToBid = rnd.Next((int)(_lastPriceBidded + _minJumpAmount), (int)(_lastPriceBidded + 2* _minJumpAmount));
-            return amountToBid;
+            return new Tuple<int, double>(AgentId, amountToBid);
         }
 
-        public bool ShouldBid()
+        public Tuple<int, bool> ShouldBid()
         {
             Random rnd = new Random();
             int shouldBid = rnd.Next(1,6);
@@ -37,7 +37,7 @@ namespace MASBogrim
             {
                 _bidNewAmount = false;
             }
-            return _bidNewAmount;
+            return new Tuple<int, bool>(AgentId, _bidNewAmount);
         }
 
         public bool ShouldEnterAuction(IProduct product, MAS mas, Auction auction)
