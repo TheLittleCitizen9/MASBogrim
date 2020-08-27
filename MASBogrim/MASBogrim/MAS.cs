@@ -14,7 +14,6 @@ namespace MASBogrim
         private IProduct _product;
         private int _secondsUntilClosingEntrance;
         private int _secondsUntilClosingBids;
-        private object _locker = new object();
         public event Func<Tuple<int, bool>> EnterBidding;
         public event Func<Tuple<int, double>> GetNewPrice;
 

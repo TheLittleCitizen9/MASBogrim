@@ -22,7 +22,6 @@ namespace MASBogrim
 
             MAS mas = new MAS(new List<Auction>() { auction, auction2}, building, 4, 3);
 
-            //mas.Main(auction);
             mas.Manager();
         }
     }

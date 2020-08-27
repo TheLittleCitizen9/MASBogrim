@@ -8,8 +8,9 @@ namespace MASBogrim
     {
         public int AgentId { get; private set; }
         private bool _bidNewAmount = false;
-        private double _lastPriceBidded = 0;
+        private double _currentPrice = 0;
         private double _minJumpAmount = 0;
+        private double _lastPriceBidded = 0;
         public List<Agent> AuctionParticipants;
 
         public Agent(int id)
@@ -21,17 +22,24 @@ namespace MASBogrim
         public Tuple<int, double> CalculateNewPrice()
         {
             Random rnd = new Random();
-            int amountToBid = rnd.Next((int)(_lastPriceBidded + _minJumpAmount), (int)(_lastPriceBidded + 2* _minJumpAmount));
+            int amountToBid = rnd.Next((int)(_currentPrice + _minJumpAmount), (int)(_currentPrice + 2* _minJumpAmount));
+            _lastPriceBidded = amountToBid;
             return new Tuple<int, double>(AgentId, amountToBid);
         }
-
         public Tuple<int, bool> ShouldBid()
         {
             Random rnd = new Random();
             int shouldBid = rnd.Next(1,6);
             if(shouldBid == 1)
             {
-                _bidNewAmount = true;
+                if(_currentPrice == _lastPriceBidded)
+                {
+                    _bidNewAmount = false;
+                }
+                else
+                {
+                    _bidNewAmount = true;
+                }
             }
             else
             {
@@ -74,14 +82,14 @@ namespace MASBogrim
         public void PrintPrices(double startPrice, double minJumpPrice, int id, int auctionId)
         {
             _minJumpAmount = minJumpPrice;
-            _lastPriceBidded = startPrice;
+            _currentPrice = startPrice;
             if(id != 0)
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} -  Current price: {_lastPriceBidded}, Minimum jump price: {_minJumpAmount}, Bidder: agent {id}");
+                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} -  Current price: {_currentPrice}, Minimum jump price: {_minJumpAmount}, Bidder: agent {id}");
             }
             else
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} -  Current price: {_lastPriceBidded}, Minimum jump price: {_minJumpAmount}");
+                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} -  Current price: {_currentPrice}, Minimum jump price: {_minJumpAmount}");
             }
         }
 
