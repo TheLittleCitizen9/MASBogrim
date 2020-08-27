@@ -17,6 +17,11 @@ namespace MASBogrim
             StartAuctionTimer = new Timer();
             StartBidsTimer = new Timer();
             TerminateAuction = new Timer();
+            IntializeTimers(secondsUntilClosingEntrance, secondsUntilClosingBids);
+        }
+
+        private void IntializeTimers(int secondsUntilClosingEntrance, int secondsUntilClosingBids)
+        {
             StartAuctionTimer.Elapsed += new ElapsedEventHandler(OnTimedFinishEntranceEvent);
             StartAuctionTimer.Interval = secondsUntilClosingEntrance * 1000;
             StartAuctionTimer.Enabled = false;

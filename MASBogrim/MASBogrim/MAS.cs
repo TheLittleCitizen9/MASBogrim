@@ -18,16 +18,16 @@ namespace MASBogrim
         public void Manager()
         {
             Console.WriteLine("! I Am The MAS !");
-            Task.Factory.StartNew(() =>
+            List<Task> tasks = new List<Task>();
+            foreach (var auction in _auctions)
             {
-                Thread.CurrentThread.IsBackground = false;
-                foreach (var auction in _auctions)
+                tasks.Add(Task.Factory.StartNew(() =>
                 {
-                    Task task = new Task(() => Main(auction));
-                    task.Start();
-                }
-            });
-            Console.ReadLine();
+                    Main(auction);
+                }));
+            } 
+            Task.WaitAll(tasks.ToArray());
+
         }
         public void Main(Auction auction)
         {
