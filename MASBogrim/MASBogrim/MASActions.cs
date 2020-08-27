@@ -6,14 +6,15 @@ namespace MASBogrim
 {
     public class MASActions
     {
-        public event Func<Tuple<int, bool>> EnterBidding;
+        public event Func<Auction,Tuple<int, bool>> EnterBidding;
         public event Func<Tuple<int, double>> GetNewPrice;
+        private object _locker = new object();
         
         public void SendProductInfo(Auction auction, MAS mas)
         {
             foreach (var agent in auction.Agents)
             {
-                int agentId = agent.AgentId;
+                int agentId = agent.GetAgentId();
                 var biddingAgent = agent;
                 Task<bool> task = new Task<bool>(() => biddingAgent.ShouldEnterAuction(auction.Product, mas, auction));
                 task.Start();
@@ -27,7 +28,7 @@ namespace MASBogrim
         {
             foreach (var agent in auction.BiddingAgents)
             {
-                int agentId = agent.AgentId;
+                int agentId = agent.GetAgentId();
                 var biddingAgent = agent;
                 Task task = new Task(() => biddingAgent.PrintPrices(auction.CurrentPrice, auction.MinPriceJump, auction.HighestBidder, auction.Id));
                 task.Start();
@@ -46,10 +47,17 @@ namespace MASBogrim
             auction._timers.TerminateAuction.Stop();
             foreach (var result in results)
             {
-                if (result.Item2 > auction.CurrentPrice)
+                if(result != null)
                 {
-                    auction.CurrentPrice = result.Item2;
-                    auction.HighestBidder = result.Item1;
+                    lock(_locker)
+                    {
+                        if (result.Item2 > auction.CurrentPrice)
+                        {
+                            auction.CurrentPrice = result.Item2;
+                            auction.HighestBidder = result.Item1;
+                        }
+                    }
+                    
                 }
             }
             SendPrices(auction);
@@ -83,7 +91,7 @@ namespace MASBogrim
         }
         public void AddAgentToAuction(int id, Auction auction)
         {
-            var agent = auction.Agents.Find(a => a.AgentId == id);
+            var agent = auction.Agents.Find(a => a.GetAgentId() == id);
             auction.BiddingAgents.Add(agent);
             EnterBidding += agent.ShouldBid;
             Console.WriteLine($"MAS -- Agent {id} entered auction {auction.Id}");
@@ -118,12 +126,12 @@ namespace MASBogrim
                 tasks.Add(Task.Factory.StartNew(() =>
                 {
                     var outputMsg = item;
-                    var result = (Tuple<int, bool>)outputMsg?.DynamicInvoke();
+                    var result = (Tuple<int, bool>)outputMsg?.DynamicInvoke(auction);
                     if (result.Item2)
                     {
                         if (auction.BiddingAgents.Count > 0)
                         {
-                            var agent = auction.BiddingAgents.Find(a => a.AgentId == result.Item1);
+                            var agent = auction.BiddingAgents.Find(a => a.GetAgentId() == result.Item1);
                             if (agent != null)
                             {
                                 GetNewPrice += agent.CalculateNewPrice;

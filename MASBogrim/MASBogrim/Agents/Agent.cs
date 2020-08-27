@@ -5,7 +5,7 @@ namespace MASBogrim
 {
     public class Agent : IAgent
     {
-        public int AgentId { get; private set; }
+        private int _agentId;
         private bool _bidNewAmount = false;
         private double _currentPrice = 0;
         private double _minJumpAmount = 0;
@@ -14,8 +14,13 @@ namespace MASBogrim
 
         public Agent(int id)
         {
-            AgentId = id;
+            _agentId = id;
             AuctionParticipants = new List<Agent>();
+        }
+
+        public int GetAgentId()
+        {
+            return _agentId;
         }
 
         public Tuple<int, double> CalculateNewPrice()
@@ -23,9 +28,9 @@ namespace MASBogrim
             Random rnd = new Random();
             int amountToBid = rnd.Next((int)(_currentPrice + _minJumpAmount), (int)(_currentPrice + 2* _minJumpAmount));
             _lastPriceBidded = amountToBid;
-            return new Tuple<int, double>(AgentId, amountToBid);
+            return new Tuple<int, double>(_agentId, amountToBid);
         }
-        public Tuple<int, bool> ShouldBid()
+        public Tuple<int, bool> ShouldBid(Auction auction)
         {
             Random rnd = new Random();
             int shouldBid = rnd.Next(1,6);
@@ -44,7 +49,7 @@ namespace MASBogrim
             {
                 _bidNewAmount = false;
             }
-            return new Tuple<int, bool>(AgentId, _bidNewAmount);
+            return new Tuple<int, bool>(_agentId, _bidNewAmount);
         }
 
         public bool ShouldEnterAuction(IProduct product, MAS mas, Auction auction)
@@ -64,17 +69,17 @@ namespace MASBogrim
 
         public void PrintWinner(int id, double price, int auctionId)
         {
-            if(id == AgentId)
+            if(id == _agentId)
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} - I won !!! Price: {price}$");
+                Console.WriteLine($"Agent: {_agentId} -- Auction {auctionId} - I won !!! Price: {price}$");
             }
             else if(id ==0)
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} - No one bid so there is no winner");
+                Console.WriteLine($"Agent: {_agentId} -- Auction {auctionId} - No one bid so there is no winner");
             }
             else
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} - Winner is: Agent {id}. He bidded {price}$");
+                Console.WriteLine($"Agent: {_agentId} -- Auction {auctionId} - Winner is: Agent {id}. He bidded {price}$");
             }
         }
 
@@ -84,17 +89,17 @@ namespace MASBogrim
             _currentPrice = startPrice;
             if(id != 0)
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} -  Current price: {_currentPrice}, Minimum jump price: {_minJumpAmount}, Bidder: agent {id}");
+                Console.WriteLine($"Agent: {_agentId} -- Auction {auctionId} -  Current price: {_currentPrice}, Minimum jump price: {_minJumpAmount}, Bidder: agent {id}");
             }
             else
             {
-                Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} -  Current price: {_currentPrice}, Minimum jump price: {_minJumpAmount}");
+                Console.WriteLine($"Agent: {_agentId} -- Auction {auctionId} -  Current price: {_currentPrice}, Minimum jump price: {_minJumpAmount}");
             }
         }
 
         public void PrintProductInfo(IProduct product, int auctionId)
         {
-            Console.WriteLine($"Agent: {AgentId} -- Auction {auctionId} - {product.GetProductInformation()}"); 
+            Console.WriteLine($"Agent: {_agentId} -- Auction {auctionId} - {product.GetProductInformation()}"); 
         }
     }
 }

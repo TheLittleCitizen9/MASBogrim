@@ -27,7 +27,6 @@ namespace MASBogrim
                 }));
             } 
             Task.WaitAll(tasks.ToArray());
-
         }
         public void Main(Auction auction)
         {

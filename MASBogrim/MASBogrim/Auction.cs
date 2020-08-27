@@ -12,9 +12,9 @@ namespace MASBogrim
         public int Id { get; private set; }
         public double CurrentPrice { get; set; }
 
-        public List<Agent> Agents { get; set; }
+        public List<IAgent> Agents { get; set; }
 
-        public List<Agent> BiddingAgents { get; set; }
+        public List<IAgent> BiddingAgents { get; set; }
 
         public int HighestBidder { get; set; }
         public bool IsThereAWinner { get; set; }
@@ -31,8 +31,8 @@ namespace MASBogrim
             StartTime = startTime;
             Id = id;
             CurrentPrice = StartPrice;
-            Agents = new List<Agent>();
-            BiddingAgents = new List<Agent>();
+            Agents = new List<IAgent>();
+            BiddingAgents = new List<IAgent>();
             IsThereAWinner = false;
             SecondsUntilClosingEntrance = secondsUntilClosingEntrance;
             SecondsUntilClosingBids = secondsUntilClosingBids;
