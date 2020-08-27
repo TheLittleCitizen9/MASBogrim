@@ -32,7 +32,7 @@ namespace MASBogrim
         public void Main(Auction auction)
         {
             auction._timers = new Timers(auction.SecondsUntilClosingEntrance, auction.SecondsUntilClosingBids, _MASActions, auction);
-            Console.WriteLine($"Auction {auction.Id} is starting !!");
+            Console.WriteLine($"Auction {auction.Id} is starting at {auction.StartTime}");
             int count = 0;
             while (!auction.IsThereAWinner)
             {
