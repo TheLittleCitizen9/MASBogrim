@@ -1,4 +1,5 @@
 ﻿using MASBogrim.Buildings;
+using MASBogrim.Products;
 using System;
 using System.Collections.Generic;
 
@@ -17,7 +18,9 @@ namespace MASBogrim
             Building building2 = new Building("Cramim", true, true, true, true, 10, 4, 8, rooms);
             Building building3 = new Building("Bereshit", true, true, true, true, 10, 4, 8, rooms);
 
-            Auction auction = new Auction(building1, 10000, 1000, DateTime.Now.AddSeconds(10), 8, 4, 3);
+            Neckless neckless = new Neckless("Neckless", 24, JewleryMaterial.WhiteGold);
+
+            Auction auction = new Auction(neckless, 40000, 1000, DateTime.Now.AddSeconds(10), 8, 4, 3);
             Auction auction2 = new Auction(building2, 10000, 1000, DateTime.Now.AddSeconds(10), 2, 4, 3);
             Auction auction3 = new Auction(building3, 10000, 1000, DateTime.Now.AddSeconds(10), 10, 4, 3);
 
