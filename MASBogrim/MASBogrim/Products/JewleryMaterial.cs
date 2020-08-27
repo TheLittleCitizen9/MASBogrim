@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MASBogrim.Products
+﻿namespace MASBogrim.Products
 {
     public enum JewleryMaterial
     {
