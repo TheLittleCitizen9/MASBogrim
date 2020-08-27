@@ -12,15 +12,16 @@ namespace MASBogrim
             Agent agent2 = new Agent(2);
 
             List<Room> rooms = new List<Room>() { new Room(RoomType.Bedroom, 20) };
-            Building building = new Building("dar", true, true, true, true, 10, 4, 8, rooms);
+            Building building1 = new Building("dar", true, true, true, true, 10, 4, 8, rooms);
+            Building building2 = new Building("dror", true, true, true, true, 10, 4, 8, rooms);
 
-            Auction auction = new Auction("dar", "a great house", 10000, 1000, DateTime.Now.AddSeconds(10), 8);
-            Auction auction2 = new Auction("dror", "a good house", 10000, 1000, DateTime.Now.AddSeconds(10), 6);
+            Auction auction = new Auction(building1, 10000, 1000, DateTime.Now.AddSeconds(10), 8, 4, 3);
+            Auction auction2 = new Auction(building2, 10000, 1000, DateTime.Now.AddSeconds(10), 6, 4, 3);
 
             auction.Agents = new List<Agent>() { agent1, agent2 };
             auction2.Agents = new List<Agent>() { agent1, agent2 };
 
-            MAS mas = new MAS(new List<Auction>() { auction, auction2}, building, 4, 3);
+            MAS mas = new MAS(new List<Auction>() { auction, auction2});
 
             mas.Manager();
         }

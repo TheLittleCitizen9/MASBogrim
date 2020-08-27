@@ -10,10 +10,10 @@ namespace MASBogrim
         public Timer StartAuctionTimer;
         public Timer StartBidsTimer;
         public Timer TerminateAuction;
-        private MAS _mas;
+        private MASActions _mas;
         private Auction _auction;
 
-        public Timers(int secondsUntilClosingEntrance, int secondsUntilClosingBids, MAS mas, Auction auction)
+        public Timers(int secondsUntilClosingEntrance, int secondsUntilClosingBids, MASActions mas, Auction auction)
         {
             _mas = mas;
             _auction = auction;

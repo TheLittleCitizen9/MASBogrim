@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MASBogrim
 {
-    public class Agent
+    public class Agent : IAgent
     {
         public int AgentId { get; private set; }
         private bool _bidNewAmount = false;

@@ -8,6 +8,7 @@ namespace MASBogrim
     {
         public string ProductName { get; private set; }
         public string ProductInfo { get; private set; }
+        public IProduct Product { get; private set; }
         public double StartPrice { get; private set; }
         public double MinPriceJump { get; private set; }
         public DateTime StartTime { get; private set; }
@@ -21,12 +22,15 @@ namespace MASBogrim
         public int HighestBidder { get; set; }
         public bool IsThereAWinner { get; set; }
         public Timers _timers;
+        public int SecondsUntilClosingEntrance { get; set; }
+        public int SecondsUntilClosingBids { get; set; }
 
-        public Auction(string productName, string info, double startPrice,
-            double minPriceJump, DateTime startTime, int id)
+        public Auction(IProduct product, double startPrice, 
+            double minPriceJump, DateTime startTime, int id, int secondsUntilClosingEntrance, int secondsUntilClosingBids)
         {
-            ProductName = productName;
-            ProductInfo = info;
+            //ProductName = productName;
+            //ProductInfo = info;
+            Product = product;
             StartPrice = startPrice;
             MinPriceJump = minPriceJump;
             StartTime = startTime;
@@ -35,6 +39,8 @@ namespace MASBogrim
             Agents = new List<Agent>();
             BiddingAgents = new List<Agent>();
             IsThereAWinner = false;
+            SecondsUntilClosingEntrance = secondsUntilClosingEntrance;
+            SecondsUntilClosingBids = secondsUntilClosingBids;
         }
     }
 }
